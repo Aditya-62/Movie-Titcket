@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanam Teri Kasam Tickets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1em 0;
+            text-align: center;
+        }
+
+        .movie-details {
+            display: flex;
+            padding: 2em;
+            background-color: #fff;
+            margin: 2em auto;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .movie-details img {
+            width: 300px;
+            height: auto;
+            border-radius: 8px;
+            margin-right: 2em;
+        }
+
+        button#bookTicketBtn {
+            background-color: #ff5733;
+            color: #fff;
+            border: none;
+            padding: 1em 2em;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 1em;
+        }
+
+        button#bookTicketBtn:hover {
+            background-color: #e14e2b;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 2em;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            right: 1em;
+            top: 0.5em;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .seats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 1em;
+        }
+
+        .seat {
+            width: 40px;
+            height: 40px;
+            background-color: #ddd;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .seat.occupied {
+            background-color: #ff4d4d;
+            cursor: not-allowed;
+        }
+
+        .seat.selected {
+            background-color: #4caf50;
+        }
+
+        .summary {
+            margin-top: 1em;
+        }
+
+        .book-button {
+            background-color: #ff5733;
+            color: #fff;
+            border: none;
+            padding: 0.5em 1em;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 1em;
+        }
+
+        .book-button:hover {
+            background-color: #e14e2b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sanam Teri Kasam</h1>
+    </header>
+    <main>
+        <section class="movie-details">
+            <img src="https://m.media-amazon.com/images/M/MV5BOWZkZjhjNzktMWY5NC00NGI0LTk1OWItZGIwNDk5MDZhYWExXkEyXkFqcGc@.V1.jpg" alt="Sanam Teri Kasam Movie Poster">
+            <div>
+                <h2>Sanam Teri Kasam</h2>
+                <button id="bookTicketBtn">Book Your Ticket</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Book Your Tickets</h2>
+            <div class="seat-selection">
+                <h3>Select Your Seats</h3>
+                <div class="seats">
+                    <div class="seat" data-seat-number="1">1</div>
+                    <div class="seat occupied" data-seat-number="2">2</div>
+                    <div class="seat" data-seat-number="3">3</div>
+                </div>
+            </div>
+            <p><strong>Selected Seats:</strong> <span id="selectedSeats">None</span></p>
+            <p><strong>Total Price:</strong> ₹<span id="totalPrice">0</span></p>
+            <button id="bookNowBtn" class="book-button">Book Now</button>
+            <div id="confirmationMessage" style="display: none;">
+                <h2>Booking Confirmed!</h2>
+                <p><strong>Seats:</strong> <span id="confirmedSeats"></span></p>
+                <p><strong>Total Paid:</strong> ₹<span id="confirmedAmount"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script>
+        emailjs.init("vsbSg9o2Uiv7aTOzv"); // Replace with your EmailJS user ID
+
+        const bookTicketBtn = document.getElementById('bookTicketBtn');
+        const bookingModal = document.getElementById('bookingModal');
+        const closeModal = document.querySelector('.close');
+        const seats = document.querySelectorAll('.seat');
+        const selectedSeats = document.getElementById('selectedSeats');
+        const totalPrice = document.getElementById('totalPrice');
+        const bookNowBtn = document.getElementById('bookNowBtn');
+        const confirmationMessage = document.getElementById('confirmationMessage');
+        const confirmedSeats = document.getElementById('confirmedSeats');
+        const confirmedAmount = document.getElementById('confirmedAmount');
+        const pricePerSeat = 250;
+        let selectedSeatNumbers = [];
+        let totalCost = 0;
+
+        bookTicketBtn.addEventListener('click', () => {
+            bookingModal.style.display = 'flex';
+        });
+
+        closeModal.addEventListener('click', () => {
+            bookingModal.style.display = 'none';
+        });
+
+        seats.forEach(seat => {
+            seat.addEventListener('click', () => {
+                if (!seat.classList.contains('occupied')) {
+                    seat.classList.toggle('selected');
+                    updateSelectedSeats();
+                }
+            });
+        });
+
+        function updateSelectedSeats() {
+            selectedSeatNumbers = [...seats].filter(seat => seat.classList.contains('selected')).map(seat => seat.dataset.seatNumber);
+            selectedSeats.textContent = selectedSeatNumbers.join(', ') || 'None';
+            totalCost = selectedSeatNumbers.length * pricePerSeat;
+            totalPrice.textContent = totalCost;
+        }
+
+        bookNowBtn.addEventListener('click', () => {
+            if (selectedSeatNumbers.length > 0) {
+                confirmationMessage.style.display = 'block';
+                confirmedSeats.textContent = selectedSeatNumbers.join(', ');
+                confirmedAmount.textContent = totalCost;
+
+                emailjs.send('service_o30uho9', 'template_kg5hq2d', {
+                    seats: selectedSeatNumbers.join(', '),
+                    amount: totalCost
+                }).then(() => {
+                    alert("Booking confirmation email sent!");
+                }).catch(error => {
+                    console.error("Email error:", error);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
